@@ -1,34 +1,20 @@
-# Doubly-linked list exercise.
-# I added a #to_s for the DoublyLinkedList which exercises the #each method.
-# I cannot quite remember the requirements--I hope I haven't misunderstood
-# how you wanted #each to work.
-#
-# If you wanted a singly-linked list, the logic is fussier--it's been a long time
-# since I implemented such, but, I'll be happy to do it when/if someone asks.
-#
-# I'm sorry, I felt very thumb-fingered coding in that little tool under
-# your gaze (as it were).  And, I do not often implement things like linked
-# lists.
-#
-# You may notice the new, Ruby 2.3 "safe navigation" operator, &.
-#
-# You did not ask for an #unshift method for the DoublyLinkedList, to my knowledge.
-# That is why, in this little implementation, Node takes an optional left-ptr
-# param but no optional right-ptr; we'll never be unshifting nodes onto the beginning
-# of the list.
-#
-# Finally:  please note that in real life I'd have written an RSpec file or some kind
-# of unit test for these classes.  Also, since Node is used only as a private
-# aspect of DoublyLinkedList, I'd probably move the class definition for Node within
-# DoublyLinkedList--as in, DoublyLinkedList::Node. Opinions vary on that kind of thing.
 class DoublyLinkedList
   include Enumerable
 
   attr_accessor :head
   attr_accessor :tail
+  attr_reader :size
 
-  def each(&block)
-    head&.each(&block)
+  def each(maximum_depth = nil, &block)
+    head&.each(maximum_depth, &block)
+  end
+
+  def initialize
+    @size ||= 0
+  end
+
+  def inspect
+    "<<#{to_s}>>"
   end
 
   def push(*values)
@@ -44,7 +30,7 @@ class DoublyLinkedList
   end
 
   def pop
-    return nil unless tail_node = tail # Empty list. Depending on requirement, raise error, instead?
+    return nil unless tail_node = tail
 
     self.tail = tail_node.left
 
@@ -54,12 +40,13 @@ class DoublyLinkedList
       tail.right = nil
     end
 
-    tail_node.left = nil # Pbly not necessary, but perhaps helps GC
+    @size -= 1
+    tail_node.left = nil # Probably not necessary, but perhaps helps GC
     tail_node.value
   end
 
   def shift
-    return nil unless head_node = head # Empty list
+    return nil unless head_node = head
 
     self.head = head_node.right
 
@@ -69,32 +56,48 @@ class DoublyLinkedList
       head.left = nil
     end
 
-    head_node.right = nil # Pbly not necessary, but perhaps helps GC
+    @size -= 1
+    head_node.right = nil # Probably not necessary, but perhaps helps GC
     head_node.value
   end
 
-  def to_s
-    inspect
+  def take(number)
+    self.class.new.tap do |result|
+      each(number) { |value| result.push(value) }
+    end.to_a
   end
 
-  def inspect
-    "<<#{to_a.join(", ")}>>"
+  def to_a
+    [].tap do |result|
+      each { |value| result.push(value) }
+    end
   end
+
+  def to_s
+    if size <= 50
+      to_a.to_s
+    else
+      take(50).to_s + "...(#{size} total size)"
+    end
+  end
+
+  private
 
   class Node
     attr_reader :value
     attr_accessor :left
     attr_accessor :right
 
-    def each(&block) # This works but isn't a complete implementation of Enumerable's #each
+    def each(maximum_depth = nil, &block)
+      return if maximum_depth && maximum_depth <= 0
+
       yield(value)
-      right&.each(&block)
+      right&.each(maximum_depth ? maximum_depth - 1 : nil, &block)
     end
 
     def initialize(value, left = nil)
-      @value = value # Do we care about a nil value?
+      @value = value # TODO Do we care about a nil value?
       self.left = left
     end
   end
 end
-
