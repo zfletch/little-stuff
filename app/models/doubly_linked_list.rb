@@ -1,5 +1,5 @@
 # Doubly-linked list exercise.
-# I added a #to_s for the LinkedList which exercises the #each method.
+# I added a #to_s for the DoublyLinkedList which exercises the #each method.
 # I cannot quite remember the requirements--I hope I haven't misunderstood
 # how you wanted #each to work.
 #
@@ -12,16 +12,18 @@
 #
 # You may notice the new, Ruby 2.3 "safe navigation" operator, &.
 #
-# You did not ask for an #unshift method for the LinkedList, to my knowledge.
+# You did not ask for an #unshift method for the DoublyLinkedList, to my knowledge.
 # That is why, in this little implementation, Node takes an optional left-ptr
 # param but no optional right-ptr; we'll never be unshifting nodes onto the beginning
 # of the list.
 #
 # Finally:  please note that in real life I'd have written an RSpec file or some kind
 # of unit test for these classes.  Also, since Node is used only as a private
-# aspect of LinkedList, I'd probably move the class definition for Node within
-# LinkedList--as in, LinkedList::Node. Opinions vary on that kind of thing.
-class LinkedList
+# aspect of DoublyLinkedList, I'd probably move the class definition for Node within
+# DoublyLinkedList--as in, DoublyLinkedList::Node. Opinions vary on that kind of thing.
+class DoublyLinkedList
+  include Enumerable
+
   attr_accessor :head
   attr_accessor :tail
 
@@ -29,12 +31,16 @@ class LinkedList
     head&.each(&block)
   end
 
-  def push(value)
-    if tail.nil?
-      self.head = self.tail = Node.new(value)
-    else
-      self.tail = self.tail.right = Node.new(value, tail)
+  def push(*values)
+    values.each do |value|
+      if tail.nil?
+        self.head = self.tail = Node.new(value)
+      else
+        self.tail = self.tail.right = Node.new(value, tail)
+      end
     end
+
+    self
   end
 
   def pop
@@ -68,24 +74,27 @@ class LinkedList
   end
 
   def to_s
-    each { |node| puts node.value }
+    inspect
+  end
+
+  def inspect
+    "<<#{to_a.join(", ")}>>"
+  end
+
+  class Node
+    attr_reader :value
+    attr_accessor :left
+    attr_accessor :right
+
+    def each(&block) # This works but isn't a complete implementation of Enumerable's #each
+      yield(value)
+      right&.each(&block)
+    end
+
+    def initialize(value, left = nil)
+      @value = value # Do we care about a nil value?
+      self.left = left
+    end
   end
 end
-
-class Node
-  attr_reader :value
-  attr_accessor :left
-  attr_accessor :right
-
-  def each(&block) # This works but isn't a complete implementation of Enumerable's #each
-    yield(self)
-    right&.each(&block)
-  end
-
-  def initialize(value, left = nil)
-    @value = value # Do we care about a nil value?
-    self.left = left
-  end
-end
-
 
