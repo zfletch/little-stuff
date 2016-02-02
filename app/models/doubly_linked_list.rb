@@ -5,8 +5,12 @@ class DoublyLinkedList
   attr_accessor :tail
   attr_reader :size
 
-  def each(maximum_depth = nil, &block)
-    head&.each(maximum_depth, &block)
+  def each(&block)
+    head&.each(&block)
+  end
+
+  def empty?
+    tail.nil?
   end
 
   def initialize
@@ -19,6 +23,8 @@ class DoublyLinkedList
 
   def push(*values)
     values.each do |value|
+      @size += 1
+
       if tail.nil?
         self.head = self.tail = Node.new(value)
       else
@@ -28,6 +34,8 @@ class DoublyLinkedList
 
     self
   end
+
+  alias << push
 
   def pop
     return nil unless tail_node = tail
@@ -61,12 +69,6 @@ class DoublyLinkedList
     head_node.value
   end
 
-  def take(number)
-    self.class.new.tap do |result|
-      each(number) { |value| result.push(value) }
-    end.to_a
-  end
-
   def to_a
     [].tap do |result|
       each { |value| result.push(value) }
@@ -88,11 +90,9 @@ class DoublyLinkedList
     attr_accessor :left
     attr_accessor :right
 
-    def each(maximum_depth = nil, &block)
-      return if maximum_depth && maximum_depth <= 0
-
+    def each(&block)
       yield(value)
-      right&.each(maximum_depth ? maximum_depth - 1 : nil, &block)
+      right&.each(&block)
     end
 
     def initialize(value, left = nil)
